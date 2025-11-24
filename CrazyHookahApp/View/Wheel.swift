@@ -276,7 +276,7 @@ struct MixSlotCell: View {
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color.black.opacity(0.55))
                 .frame(height: 38)
             

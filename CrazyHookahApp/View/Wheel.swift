@@ -12,7 +12,7 @@ struct WheelScreen: View {
     
     @State private var isSaveSheetPresented: Bool = false
     @State private var isRatingOverlayPresented: Bool = false
-    @State private var ratingValue: Int = 0
+    @State private var isArchiveActive: Bool = false
     
     private var canSpinMore: Bool {
         !store.isSpinning && store.currentSpinCount < store.maxSpins
@@ -25,6 +25,14 @@ struct WheelScreen: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                NavigationLink(
+                    destination: ArchiveScreen(),
+                    isActive: $isArchiveActive
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+                
                 Image(backgroundImageName)
                     .resizable()
                     .scaledToFill()
@@ -47,11 +55,15 @@ struct WheelScreen: View {
                             onSave: {
                                 withAnimation(.easeOut(duration: 0.25)) {
                                     isSaveSheetPresented = false
+                                    
                                     if let mix = store.currentMix {
-                                        ratingValue = mix.rating ?? 0
+                                        store.currentRating = mix.rating ?? 0
+                                        store.currentNote = mix.profile.tagline
                                     } else {
-                                        ratingValue = 0
+                                        store.currentRating = 0
+                                        store.currentNote = ""
                                     }
+                                    
                                     isRatingOverlayPresented = true
                                 }
                             },
@@ -71,12 +83,14 @@ struct WheelScreen: View {
                 if isRatingOverlayPresented, let mix = store.currentMix {
                     RatingOverlayView(
                         mix: mix,
-                        rating: $ratingValue,
+                        rating: $store.currentRating,
                         onSave: {
                             store.saveCurrentMixToArchive()
                             withAnimation(.easeOut(duration: 0.25)) {
                                 isRatingOverlayPresented = false
                             }
+                            store.openArchive()
+                            isArchiveActive = true
                         },
                         onCancel: {
                             withAnimation(.easeOut(duration: 0.25)) {
@@ -216,6 +230,7 @@ struct WheelScreen: View {
                     if !store.isSpinning {
                         Button {
                             store.openArchive()
+                            isArchiveActive = true
                         } label: {
                             Text("ARCHIVE")
                                 .font(.system(size: 20, weight: .heavy))
@@ -564,21 +579,9 @@ struct RatingOverlayView: View {
     }
 }
 
-private struct WheelScreenPreviewHost: View {
-    @StateObject private var store: CrazyHookahStore
-    
-    @MainActor
-    init() {
-        _store = StateObject(wrappedValue: CrazyHookahStore())
-    }
-    
-    var body: some View {
-        WheelScreen()
-            .environmentObject(store)
-            .preferredColorScheme(.dark)
-    }
-}
+
 
 #Preview {
-    WheelScreenPreviewHost()
+    WheelScreen()
+        .environmentObject(CrazyHookahStore())
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ArchiveScreen: View {
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: CrazyHookahStore
     
     private let backgroundImageName = "archiveBack"
@@ -10,6 +10,9 @@ struct ArchiveScreen: View {
         GridItem(.flexible(), spacing: 24),
         GridItem(.flexible(), spacing: 24)
     ]
+    
+    @State private var mixPendingDeletion: HookahMix?
+    @State private var isDeleteAlertPresented: Bool = false
     
     var body: some View {
         ZStack {
@@ -20,6 +23,7 @@ struct ArchiveScreen: View {
             
             VStack(spacing: 0) {
                 topBar
+                    .padding(.top, 16)
                 
                 ScrollView(showsIndicators: false) {
                     LazyVGrid(columns: columns, alignment: .center, spacing: 24) {
@@ -27,7 +31,13 @@ struct ArchiveScreen: View {
                             NavigationLink {
                                 ArchiveDetailScreen(mix: mix)
                             } label: {
-                                ArchiveMixCardView(mix: mix)
+                                ArchiveMixCardView(
+                                    mix: mix,
+                                    onDeleteTap: {
+                                        mixPendingDeletion = mix
+                                        isDeleteAlertPresented = true
+                                    }
+                                )
                             }
                             .buttonStyle(.plain)
                         }
@@ -39,6 +49,14 @@ struct ArchiveScreen: View {
             }
         }
         .dynamicTypeSize(.medium)
+        .alert("Delete this mix?", isPresented: $isDeleteAlertPresented, presenting: mixPendingDeletion) { mix in
+            Button("Delete", role: .destructive) {
+                store.deleteMixFromArchive(mix)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { _ in
+            Text("This action cannot be undone.")
+        }
     }
     
     private var topBar: some View {
@@ -83,111 +101,129 @@ struct ArchiveScreen: View {
 
 struct ArchiveMixCardView: View {
     let mix: HookahMix
+    let onDeleteTap: () -> Void
     
     private var rating: Int {
         max(0, min(5, mix.rating ?? 0))
     }
     
+    private var borderGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(red: 1.0, green: 0.92, blue: 0.40),
+                Color(red: 0.99, green: 0.68, blue: 0.26)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private var fillGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(red: 0.18, green: 0.17, blue: 0.13),
+                Color(red: 0.11, green: 0.10, blue: 0.08)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private var glossGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color.white.opacity(0.30),
+                Color.clear
+            ]),
+            startPoint: .topTrailing,
+            endPoint: .center
+        )
+    }
+    
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(red: 1.0, green: 0.92, blue: 0.40),
-                            Color(red: 0.99, green: 0.68, blue: 0.26)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 2
-                )
+                .stroke(borderGradient, lineWidth: 3)
                 .background(
                     RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color.white.opacity(0.12),
-                                    Color.black.opacity(0.65)
-                                ]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(fillGradient)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color.white.opacity(0.20),
-                                    Color.clear
-                                ]),
-                                startPoint: .topTrailing,
-                                endPoint: .center
-                            )
-                        )
+                        .fill(glossGradient)
                         .mask(
                             RoundedRectangle(cornerRadius: 30, style: .continuous)
                         )
                 )
             
-            VStack(spacing: 10) {
-                Spacer(minLength: 22)
+            HStack {
+                Button {
+                    onDeleteTap()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.black.opacity(0.55))
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                if (mix.rating ?? 0) <= 3 {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 1.0, green: 0.38, blue: 0.24),
+                                        Color(red: 0.90, green: 0.12, blue: 0.10)
+                                    ]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                        Text("!")
+                            .font(.system(size: 15, weight: .black))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 26, height: 26)
+                }
+            }
+            .padding(.top, 10)
+            .padding(.horizontal, 10)
+            
+            VStack(spacing: 14) {
+                Spacer(minLength: 34)
                 
                 Text(mix.title)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.7)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 16)
                 
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     ForEach(1...5, id: \.self) { index in
-                        Image(systemName: index <= rating ? "star.fill" : "star")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 16, height: 16)
-                            .foregroundColor(
-                                index <= rating
-                                ? Color(red: 1.0, green: 0.82, blue: 0.24)
-                                : Color.white.opacity(0.3)
-                            )
+                        GradientRatingStarView(
+                            isFilled: index <= rating,
+                            size: 22
+                        )
                     }
                 }
-                .padding(.top, 4)
                 
                 Text(mix.formattedDate)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(Color.white.opacity(0.85))
-                    .padding(.top, 16)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(Color.white.opacity(0.8))
+                    .padding(.top, 4)
                 
-                Spacer(minLength: 18)
+                Spacer(minLength: 22)
             }
-            .padding(.horizontal, 12)
-            
-            if (mix.rating ?? 0) <= 3 {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 1.0, green: 0.38, blue: 0.24),
-                                    Color(red: 0.90, green: 0.12, blue: 0.10)
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                    
-                    Text("!")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundColor(.white)
-                }
-                .frame(width: 24, height: 24)
-                .offset(x: -10, y: 10)
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(height: 190)
     }
@@ -212,6 +248,7 @@ struct ArchiveDetailScreen: View {
             
             VStack(spacing: 0) {
                 topBar
+                    .padding(.top, 16)
                 
                 ScrollView(showsIndicators: false) {
                     ArchiveDetailCard(mix: mix, rating: rating)
@@ -320,7 +357,6 @@ struct ArchiveDetailCard: View {
                 .frame(height: 80)
                 .padding(.horizontal, 24)
                 
-                // Звезды
                 HStack(spacing: 8) {
                     ForEach(1...5, id: \.self) { index in
                         GradientRatingStarView(
@@ -459,25 +495,6 @@ struct FlavorChipsGrid: View {
     }
 }
 
-struct FlavorChipView: View {
-    let title: String
-    let width: CGFloat
-    
-    var body: some View {
-        Text(title)
-            .font(.system(size: 13, weight: .heavy))
-            .foregroundColor(.white)
-            .frame(width: width)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.black.opacity(0.7))
-            )
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-    }
-}
-
 private struct ArchiveScreenPreviewHost: View {
     @StateObject private var store: CrazyHookahStore
     
@@ -487,9 +504,11 @@ private struct ArchiveScreenPreviewHost: View {
     }
     
     var body: some View {
-        ArchiveScreen()
-            .environmentObject(store)
-            .preferredColorScheme(.dark)
+        NavigationStack {
+            ArchiveScreen()
+                .environmentObject(store)
+        }
+        .preferredColorScheme(.dark)
     }
 }
 

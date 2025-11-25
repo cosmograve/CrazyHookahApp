@@ -12,7 +12,6 @@ struct WheelScreen: View {
     
     @State private var isSaveSheetPresented: Bool = false
     @State private var isRatingOverlayPresented: Bool = false
-    @State private var isArchiveActive: Bool = false
     
     private var canSpinMore: Bool {
         !store.isSpinning && store.currentSpinCount < store.maxSpins
@@ -25,14 +24,6 @@ struct WheelScreen: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                NavigationLink(
-                    destination: ArchiveScreen(),
-                    isActive: $isArchiveActive
-                ) {
-                    EmptyView()
-                }
-                .hidden()
-                
                 Image(backgroundImageName)
                     .resizable()
                     .scaledToFill()
@@ -90,7 +81,7 @@ struct WheelScreen: View {
                                 isRatingOverlayPresented = false
                             }
                             store.openArchive()
-                            isArchiveActive = true
+                            store.isArchiveActive = true
                         },
                         onCancel: {
                             withAnimation(.easeOut(duration: 0.25)) {
@@ -227,10 +218,10 @@ struct WheelScreen: View {
                     )
                     .disabled(!canSpinMore)
                     
-                    if !store.isSpinning {
+                    if !store.isSpinning && !store.archivedMixes.isEmpty  {
                         Button {
                             store.openArchive()
-                            isArchiveActive = true
+                            store.isArchiveActive = true
                         } label: {
                             Text("ARCHIVE")
                                 .font(.system(size: 20, weight: .heavy))

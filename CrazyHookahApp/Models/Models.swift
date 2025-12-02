@@ -347,6 +347,46 @@ extension Flavor {
     ]
 }
 
+extension Flavor {
+    var emoji: String {
+        switch code.lowercased() {
+
+        case "raspberry":      return "🍇"
+        case "strawberry":     return "🍓"
+        case "apple":          return "🍎"
+        case "cola":           return "🥤"
+        case "pie":            return "🥧"
+        case "mango":          return "🥭"
+        case "lime":           return "🍋"
+        case "vanilla":        return "🌼"
+        case "blueberry":      return "🫐"
+        case "watermelon":     return "🍉"
+        case "rose":           return "🌹"
+        case "coffee":         return "☕️"
+        case "lychee":         return "🥥"
+        case "pineapple":      return "🍍"
+        case "coconut":        return "🥥"
+        case "caramel":        return "🍯"
+        case "pear":           return "🍐"
+        case "orange":         return "🍊"
+        case "grape":          return "🍇"
+        case "banana":         return "🍌"
+        case "kiwi":           return "🥝"
+        case "peach":          return "🍑"
+        case "chocolate":      return "🍫"
+        case "lavender":       return "💜"
+        case "pomegranate":    return "🍎"
+        case "ginger":         return "🫚"
+        case "cranberry":      return "🫐"
+        case "honey":          return "🍯"
+        case "eucalyptus":     return "🌿"
+        case "mint":           return "🌱"
+
+        default: return "🍽️"
+        }
+    }
+}
+
 struct FlavorProfile: Codable, Equatable {
     let descriptors: [String]
     

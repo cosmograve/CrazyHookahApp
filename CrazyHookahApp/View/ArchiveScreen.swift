@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct ArchiveScreen: View {
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: CrazyHookahStore
     
     private let backgroundImageName = "archiveBack"
@@ -16,17 +15,15 @@ struct ArchiveScreen: View {
     
     var body: some View {
         ZStack {
-            Image(backgroundImageName)
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-            
             VStack(spacing: 0) {
                 topBar
-                    .padding(.top, 16)
                 
                 ScrollView(showsIndicators: false) {
-                    LazyVGrid(columns: columns, alignment: .center, spacing: 24) {
+                    LazyVGrid(
+                        columns: columns,
+                        alignment: .center,
+                        spacing: 24
+                    ) {
                         ForEach(store.archivedMixes) { mix in
                             NavigationLink {
                                 ArchiveDetailScreen(mix: mix)
@@ -44,12 +41,16 @@ struct ArchiveScreen: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 16)
                 }
             }
         }
         .dynamicTypeSize(.medium)
-        .alert("Delete this mix?", isPresented: $isDeleteAlertPresented, presenting: mixPendingDeletion) { mix in
+        .alert(
+            "Delete this mix?",
+            isPresented: $isDeleteAlertPresented,
+            presenting: mixPendingDeletion
+        ) { mix in
             Button("Delete", role: .destructive) {
                 store.deleteMixFromArchive(mix)
             }
@@ -61,39 +62,11 @@ struct ArchiveScreen: View {
     
     private var topBar: some View {
         ZStack {
-            HStack {
-                Button {
-                    store.startNewSession()
-                    dismiss()
-                } label: {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color.white.opacity(0.30),
-                                    Color.white.opacity(0.10)
-                                ]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .overlay(
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white)
-                        )
-                        .frame(width: 56, height: 56)
-                }
-                .buttonStyle(.plain)
-                
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-            
             Text("ARCHIVE")
                 .font(.system(size: 19, weight: .bold))
                 .foregroundColor(.white)
         }
+        .frame(maxWidth: .infinity)
         .padding(.top, 28)
         .padding(.bottom, 12)
     }
@@ -229,10 +202,13 @@ struct ArchiveMixCardView: View {
     }
 }
 
+import SwiftUI
+
 struct ArchiveDetailScreen: View {
     let mix: HookahMix
     
     private let backgroundImageName = "archiveBack"
+    
     @Environment(\.dismiss) private var dismiss
     
     private var rating: Int {
@@ -254,7 +230,7 @@ struct ArchiveDetailScreen: View {
                     ArchiveDetailCard(mix: mix, rating: rating)
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 16)
                 }
             }
         }

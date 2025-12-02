@@ -21,7 +21,6 @@ final class CrazyHookahStore: ObservableObject {
     
     private let repository: MixRepository
     
-    #warning("ПОМЕНЯЙ НА ЛОАДИНГ")
     @Published var screenState: CrazyHookahScreenState = .wheel
     
     
